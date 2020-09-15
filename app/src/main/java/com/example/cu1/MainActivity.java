@@ -13,6 +13,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
     private Button Iniciar, Registrarse;
     private EditText Usuario, Contrasenia;
     private ConexionAPI conexionAPI;
+
                                                                                                     //De momento no se usa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
         Usuario = findViewById(R.id.IniUser);
         Contrasenia = findViewById(R.id.IniContrasenia);
         conexionAPI = new ConexionAPI();
+
     }
 
     public void IniciarSesion(View view){ //Se usa al pulsar el boton de iniciar sesion
@@ -30,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
         String Contra = Contrasenia.getText().toString();
         if (InicioCorrecto(Nombre, Contra)){
             Toast.makeText(getBaseContext(),"Inicio correcto", Toast.LENGTH_LONG).show();
+            //pasar a la siguiente activity
         }
         else Toast.makeText(getBaseContext(),"Fallo al iniciar sesion", Toast.LENGTH_LONG).show();
     }
@@ -39,9 +42,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
         sol = Sanear(nombre, contra);
 
         //Hacer aqui las comprobaciones con la api
-        if (sol)
-            conexionAPI.IniciarSesion(nombre,contra);
+        if (sol) {
+            conexionAPI.setUsuario(nombre);
+            conexionAPI.setContra(contra);
+
+            conexionAPI.IniciarSesion();
             sol = conexionAPI.iniciocorrecto(contra);
+        }
 
         return sol;
     }
@@ -53,6 +60,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
 
         if (RegistroCorrecto(Nombre,Contra)){
             Toast.makeText(getBaseContext(),"Te has registrado correctamente", Toast.LENGTH_LONG).show();
+            //Pasar a la siguiente activity
+
+
         }
         else Toast.makeText(getBaseContext(),"Fallo en el registro", Toast.LENGTH_LONG).show();
 
@@ -67,7 +77,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
             //Sanear
             if (Sanear(nombre,contra)){
                 if (UsuarioLibre(nombre)){
-                    conexionAPI.Registrarse(nombre,contra);
+                    conexionAPI.setUsuario(nombre);
+                    conexionAPI.setContra(contra);
+                    conexionAPI.Registrarse();
                     if (conexionAPI.registrocorrecto(nombre,contra))
                         return true;
                 }

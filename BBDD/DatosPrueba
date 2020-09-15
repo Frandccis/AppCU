@@ -1,0 +1,7 @@
+#Usuario que controla el inicio
+CREATE USER 'inicio'@'' IDENTIFIED BY 'C0mpr0b4r';
+GRANT SELECT, INSERT, UPDATE ON CU.usuario TO 'inicio'@'';
+
+#Insertamos usuarios de prueba
+CREATE USER 'Test'@'' IDENTIFIED BY 'Test';
+insert into usuario values ('Test', 'Test');  #Hay que darle permisos futuros para que inserte los datos de su app
