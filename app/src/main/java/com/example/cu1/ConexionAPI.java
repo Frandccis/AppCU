@@ -22,18 +22,43 @@ public class ConexionAPI implements ApiInstrT {
             = MediaType.get("application/json; charset=utf-8");
     private OkHttpClient client = new OkHttpClient();
 
-    private boolean SePuedeContinuar;
+    private boolean SePuedeContinuar, SesionIniciada, Registrado;
+
 
     public ConexionAPI() {
-        usuario = "";
-        contra = "";
+        this.usuario = "";
+        this.contra = "";
+        SesionIniciada = false;
+        Registrado = false;
         SePuedeContinuar = true;
     }
 
+    public ConexionAPI(String usuario, String contra) {
+        this.usuario = usuario;
+        this.contra = contra;
+        SesionIniciada = false;
+        Registrado = false;
+        SePuedeContinuar = true;
+    }
+
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
+
+    public void setContra(String contra) {
+        this.contra = contra;
+    }
+
+    public String getUsuario() {
+        return usuario;
+    }
+
+    public String getContra() {
+        return contra;
+    }
+
     @Override
-    public void IniciarSesion(String nombre, String contrasenia) {
-        usuario = nombre;
-        contra = contrasenia;
+    public void IniciarSesion() {
 
         String url = "http://10.0.2.2:5000/InicioSesion";
         String json = "{\"usuario\":\""+usuario+"\"," +
@@ -45,9 +70,19 @@ public class ConexionAPI implements ApiInstrT {
 
     @Override
     public boolean iniciocorrecto(String contrasenia) {
+        dormir();
+        return SesionIniciada;
 
-        return contrasenia == contra;
+    }
 
+    private void dormir() {
+        while (!SePuedeContinuar){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void postini(String url, String json) {
@@ -63,23 +98,29 @@ public class ConexionAPI implements ApiInstrT {
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 String mMessage = e.getMessage();
                 Log.w("failure Response", mMessage);
+                SesionIniciada = false;
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 String respuesta =  response.body().string();
                 Log.e("RespuestaApi",respuesta);
-                contra = respuesta.substring(3,respuesta.length()-3);
+
+                if (respuesta.length()  == 4){
+                        SesionIniciada = true;
+                }
+                else SesionIniciada = false;
+
                 SePuedeContinuar = true;
             }
+
         });
+
 
     }
 
     @Override
-    public void Registrarse(String nombre, String contrasenia) {
-        usuario = nombre;
-        contra = contrasenia;
+    public void Registrarse() {
 
         String url = "http://10.0.2.2:5000/InicioSesion";
         String json = "{\"usuario\":\""+usuario+"\"," +
@@ -102,21 +143,30 @@ public class ConexionAPI implements ApiInstrT {
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 String mMessage = e.getMessage();
                 Log.w("failure Response", mMessage);
+                Registrado = false;
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 String respuesta =  response.body().string();
                 Log.e("RespuestaApi",respuesta);
-                SePuedeContinuar = true;
+
+                int i = respuesta.length();
 
                 //Esto queda
+                if (respuesta.length()  == 4){
+                    Registrado = true;
+                }
+                else Registrado = false;
+
+                SePuedeContinuar = true;
             }
         });
     }
 
     @Override
     public boolean registrocorrecto( String u, String c) {
-        return u == usuario && c == contra;
+        dormir();
+        return Registrado;
     }
 }

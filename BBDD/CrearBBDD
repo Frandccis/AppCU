@@ -1,0 +1,8 @@
+
+#Creacion de tablas
+
+create table usuario (
+    NombreUsuario varchar(100) not null,
+    Contrasenia varchar(100) not null,
+    PRIMARY KEY (NombreUsuario)
+);
