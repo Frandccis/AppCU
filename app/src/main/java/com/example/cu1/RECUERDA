@@ -1,0 +1,14 @@
+Cambia en el main la variable del return de inicio correcto para que funcione con la api
+
+Bajar la calidad de la foto para que funcione en todos los moviles y np solo en el emulador
+
+Meter tanto los sensores gpd como los de la brujula en la clase camara y devolverlos al principal
+
+Y mas adelante con esos datos,te tocara guardarlos en mysqlLite
+
+Luego tendrás que saber como modificar el xml desde java para ir aniadiendo mas image button para
+cada foto que hagas
+
+Puedes poner un boton de "inicio sin conexion" en el main
+
+Por ultimo mandar los datos de mysqlLite a la API para guardarlos en la nube

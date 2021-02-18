@@ -1,5 +1,6 @@
 package com.example.cu1;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -12,7 +13,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
 
     private Button Iniciar, Registrarse;
     private EditText Usuario, Contrasenia;
-    private ConexionAPI conexionAPI;
+    public  static ConexionAPI conexionAPI;
 
                                                                                                     //De momento no se usa
     @Override
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
         if (InicioCorrecto(Nombre, Contra)){
             Toast.makeText(getBaseContext(),"Inicio correcto", Toast.LENGTH_LONG).show();
             //pasar a la siguiente activity
+            PasarALaSiguienteActivity(conexionAPI);
         }
         else Toast.makeText(getBaseContext(),"Fallo al iniciar sesion", Toast.LENGTH_LONG).show();
     }
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
             sol = conexionAPI.iniciocorrecto(contra);
         }
 
-        return sol;
+        return true; //Return True si se usa solo sin internet. La variable sol en caso contrario
     }
 
     public void Registrarse(View view){ //Se usa al pulsar el boton de registarse
@@ -61,8 +63,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
         if (RegistroCorrecto(Nombre,Contra)){
             Toast.makeText(getBaseContext(),"Te has registrado correctamente", Toast.LENGTH_LONG).show();
             //Pasar a la siguiente activity
-
-
+            PasarALaSiguienteActivity(conexionAPI);
         }
         else Toast.makeText(getBaseContext(),"Fallo en el registro", Toast.LENGTH_LONG).show();
 
@@ -105,5 +106,10 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
             res = true;
 
         return res;
+    }
+
+    private void PasarALaSiguienteActivity(ConexionAPI conexionAPI) {
+        Intent intent = new Intent(this, Principal.class);
+        startActivity(intent);
     }
 }
