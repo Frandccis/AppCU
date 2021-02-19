@@ -1,6 +1,7 @@
 package com.example.cu1;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,6 +9,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -17,6 +22,9 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
@@ -44,7 +52,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
-public class Camara extends AppCompatActivity {
+public class Camara extends AppCompatActivity implements LocationListener, SensorEventListener {
 
 
     //Srings de respuestas
@@ -93,17 +101,18 @@ public class Camara extends AppCompatActivity {
             cameraDevice = camera;
             createCameraPreview();
         }
+
         @Override
         public void onDisconnected(CameraDevice camera) {
             cameraDevice.close();
         }
+
         @Override
         public void onError(CameraDevice camera, int error) {
             cameraDevice.close();
             cameraDevice = null;
         }
     };
-
 
 
     //CAMARA
@@ -115,6 +124,7 @@ public class Camara extends AppCompatActivity {
     private ImageReader imageReader;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -122,11 +132,21 @@ public class Camara extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    //GPS
+    LocationManager locationManager;
+    private double Latitud = 0;
+    private double Longitud = 0;
+
+    //Sensor
+    private SensorManager sensorManager;
+    private float Xvalue = 0;
+    private float YValue = 0;
+    private float Zvalue = 0;
     //Handlers
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
 
-//_____________________________________COMIENZO_________________________________________
+    //_____________________________________COMIENZO_________________________________________
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,9 +154,9 @@ public class Camara extends AppCompatActivity {
 
         Guardar = findViewById(R.id.Guardarboton);
 
-        BX= findViewById(R.id.BX);
-        BY= findViewById(R.id.BY);
-        BZ= findViewById(R.id.BZ);
+        BX = findViewById(R.id.BX);
+        BY = findViewById(R.id.BY);
+        BZ = findViewById(R.id.BZ);
 
         LatV = findViewById(R.id.LatV);
         LongV = findViewById(R.id.LongV);
@@ -147,6 +167,15 @@ public class Camara extends AppCompatActivity {
     }
 
     private void Configurar() {
+        //SENSOR
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        //GPS
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            //Tenemos los permisos
+            UpdateGPS();
+        }
+
         //Con esto tan solo unimos el listener a la textura
         textureView.setSurfaceTextureListener(textureListener);
 
@@ -156,7 +185,7 @@ public class Camara extends AppCompatActivity {
             public void onClick(View view) {
                 //Debe de capturar la imagen, sacarla como bitmap y ponerla en el imageView
                 ///corresponde a la funcion takepicture
-                if(null == cameraDevice) {
+                if (null == cameraDevice) {
                     Log.e(TAG, "cameraDevice is null");
                     return;
                 }
@@ -168,12 +197,12 @@ public class Camara extends AppCompatActivity {
                     if (characteristics != null) {
                         jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
                     }
-                    int width = 640;
+                    int width = 858;
                     int height = 480;
-                    if (jpegSizes != null && 0 < jpegSizes.length) {
+                    /*if (jpegSizes != null && 0 < jpegSizes.length) {
                         width = jpegSizes[0].getWidth();
                         height = jpegSizes[0].getHeight();
-                    }
+                    }*/
                     ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
                     List<Surface> outputSurfaces = new ArrayList<Surface>(2);
                     outputSurfaces.add(reader.getSurface());
@@ -200,9 +229,9 @@ public class Camara extends AppCompatActivity {
                                 buffer.get(bytes);
 
                                 String imagen;
-                               // textView.setText(imagen);
+                                // textView.setText(imagen);
 
-                                byte[] bytesencode = Base64.getEncoder().encode(bytes);             //Codificamos los datos para ahorrar espacio
+                                byte[] bytesencode = Base64.getEncoder().encode(bytes);             //Codificamos los datos
                                 imagen = new String(bytesencode);                                    //Y lo convertimos a un string que pueda enviar por json (por ejemplo)                           //Hasta unos 60 mil caracteres ahora sacar de aqui la imagen, hasta 6 millones en mi movil
 
                                 Log.e(TAG, String.valueOf(imagen.length()));
@@ -212,12 +241,20 @@ public class Camara extends AppCompatActivity {
 
                                 Intent respuestaintent = new Intent();                                  //NO FUNCIONA EN MI TELEFONO, HAY QUE BAJARLE LA CALIDAD A LA IMAGEN
                                 respuestaintent.putExtra(RESPUESTA_FOTO, imagen);
-                                setResult(RESULT_OK, respuestaintent);
-                                Toast.makeText(getBaseContext(),"LLego hasta aqui", Toast.LENGTH_LONG).show();
-                                finish();                                       //MATA LA ACTIVITY...
-                                Toast.makeText(getBaseContext(),"Tambien aqui", Toast.LENGTH_LONG).show();
 
-                    //Esta parte es como devolver el string a un bitmap
+                                float [] brujula = {Xvalue, YValue, Zvalue};
+                                respuestaintent.putExtra(RESPUESTA_BRUJULA, brujula);
+
+                                double [] GPS = {Latitud, Longitud};
+                                respuestaintent.putExtra(RESPUESTA_COORDENADAS, GPS);
+
+                                setResult(RESULT_OK, respuestaintent);
+                                //Toast.makeText(getBaseContext(),"LLego hasta aqui", Toast.LENGTH_LONG).show();
+
+                                finish();                                      //MATA LA ACTIVITY...
+                                //Toast.makeText(getBaseContext(),"Tambien aqui", Toast.LENGTH_LONG).show();
+
+                                //Esta parte es como devolver el string a un bitmap
                                 byte[] respuesta = Base64.getDecoder().decode(imagen);              //Un ejemplo de recibir un string de json y convertirlo de nuevo a bytes
 
 
@@ -226,7 +263,7 @@ public class Camara extends AppCompatActivity {
                                 //Poner el bitmap en el imageview
                                 //imageView.setImageBitmap(bitmapImage);                                                                  //EL RESULTADO HERMOSO, mostramos la imagen
 
-                            }  catch (Exception e) {
+                            } catch (Exception e) {
                                 e.printStackTrace();
                                 finish();
                             } finally {
@@ -255,6 +292,7 @@ public class Camara extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                         }
+
                         @Override
                         public void onConfigureFailed(CameraCaptureSession session) {
                         }
@@ -267,6 +305,7 @@ public class Camara extends AppCompatActivity {
 
     }
 
+    //--------------------------------------------CAMARA------------------------------------
     private void abrirCamara() {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         Log.e(TAG, "is camera open");
@@ -277,7 +316,7 @@ public class Camara extends AppCompatActivity {
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // Add permission for camera and let user grant the permission
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED )
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
                 return;
 
             manager.openCamera(cameraId, stateCallback, null);
@@ -294,7 +333,7 @@ public class Camara extends AppCompatActivity {
             Surface surface = new Surface(texture);
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback(){
+            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                     //The camera is already closed
@@ -305,6 +344,7 @@ public class Camara extends AppCompatActivity {
                     cameraCaptureSessions = cameraCaptureSession;
                     updatePreview();
                 }
+
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
                     Toast.makeText(Camara.this, "Configuration change", Toast.LENGTH_SHORT).show();
@@ -316,7 +356,7 @@ public class Camara extends AppCompatActivity {
     }
 
     private void updatePreview() {
-        if(null == cameraDevice) {
+        if (null == cameraDevice) {
             Log.e(TAG, "updatePreview error, return");
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
@@ -332,6 +372,7 @@ public class Camara extends AppCompatActivity {
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
+
     protected void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
@@ -343,9 +384,56 @@ public class Camara extends AppCompatActivity {
         }
     }
 
+    //-------------------------------------------GPS------------------------------------------
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        Latitud = location.getLatitude();
+        Longitud = location.getLongitude();
+
+        LatV.setText("" + Latitud);
+        LongV.setText("" + Longitud);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void UpdateGPS() {
+        try {
+            locationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 5, Camara.this);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Un poema con el gps", Toast.LENGTH_LONG);
+        }
+    }
+
+    //------------------------------------SENSOR-----------------------------------------------
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            Xvalue = sensorEvent.values[0];
+            YValue = sensorEvent.values[0];
+            Xvalue = sensorEvent.values[0];
+
+
+            BX.setText("" + Xvalue);
+            BY.setText("" + YValue);
+            BZ.setText("" + Zvalue);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+
     @Override
     protected void onResume() {
         super.onResume();
+        sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+                SensorManager.SENSOR_DELAY_NORMAL);
         Log.e(TAG, "onResume");
         startBackgroundThread();
         if (textureView.isAvailable()) {
@@ -354,6 +442,7 @@ public class Camara extends AppCompatActivity {
             textureView.setSurfaceTextureListener(textureListener);
         }
     }
+
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause");
@@ -362,3 +451,5 @@ public class Camara extends AppCompatActivity {
         super.onPause();
     }
 }
+
+

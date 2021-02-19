@@ -92,10 +92,23 @@ public class Principal extends AppCompatActivity {
         if (requestCode == BITMAP_REQUEST) {
             if (resultCode == RESULT_OK) {
                 //Hacemos cosas con los datos
+
+                //IMAGEN
                 String imagen = data.getStringExtra(Camara.RESPUESTA_FOTO);
                 byte[] respuesta = Base64.getDecoder().decode(imagen);
                 Bitmap bitmapImage = BitmapFactory.decodeByteArray(respuesta, 0, respuesta.length, null);
                 imagenpruebas.setImageBitmap(bitmapImage);
+
+                //GPS
+                double [] Coordenadas = data.getDoubleArrayExtra(Camara.RESPUESTA_COORDENADAS);
+
+                //Brujula
+                float [] Brujula = data.getFloatArrayExtra(Camara.RESPUESTA_BRUJULA);
+
+                //Toast.makeText(getBaseContext(), "Holiiiiiiii", Toast.LENGTH_LONG).show();
+
+                Toast.makeText(getBaseContext(), "Lat: " + Coordenadas[0] + " y Long: " +Coordenadas[1], Toast.LENGTH_SHORT).show();
+                Toast.makeText(getBaseContext(), "X: "+ Brujula[0] + ", Y: " + Brujula[1] + ", Z: " + Brujula[2], Toast.LENGTH_LONG).show();
             }
         }
     }
