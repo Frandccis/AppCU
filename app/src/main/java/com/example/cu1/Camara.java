@@ -411,10 +411,11 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             Xvalue = sensorEvent.values[0];
-            YValue = sensorEvent.values[0];
-            Xvalue = sensorEvent.values[0];
+            YValue = sensorEvent.values[1];
+            Zvalue = sensorEvent.values[2];
+
 
 
             BX.setText("" + Xvalue);
@@ -432,7 +433,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     @Override
     protected void onResume() {
         super.onResume();
-        sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+        sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
                 SensorManager.SENSOR_DELAY_NORMAL);
         Log.e(TAG, "onResume");
         startBackgroundThread();
@@ -446,6 +447,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause");
+        sensorManager.unregisterListener(this);
         //closeCamera();
         stopBackgroundThread();
         super.onPause();

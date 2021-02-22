@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CU1</string>
+    <string name="app_name">CU</string>
     <string name="iniciar_sesi_n">Iniciar sesión</string>
     <string name="registrarse">Registrarse</string>
     <string name="usuario">Usuario</string>

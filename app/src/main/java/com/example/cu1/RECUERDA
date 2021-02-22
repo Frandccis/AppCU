@@ -2,7 +2,7 @@ Cambia en el main la variable del return de inicio correcto para que funcione co
 
 Bajar la calidad de la foto para que funcione en todos los moviles y np solo en el emulador
 
-Meter tanto los sensores gpd como los de la brujula en la clase camara y devolverlos al principal
+Meter tanto los sensores gpd como los de la brujula en la clase camara y devolverlos al principal-----Hecho
 
 Y mas adelante con esos datos,te tocara guardarlos en mysqlLite
 

@@ -4,12 +4,12 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,8 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
-import java.util.Base64;
 
 public class Principal extends AppCompatActivity {
     private ImageButton AccederCamara;
@@ -32,6 +30,8 @@ public class Principal extends AppCompatActivity {
 
     //Prueba de imagenes
     private ImageView imagenpruebas;
+    private LinearLayout linearLayout;
+    private int contadorImagenes = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +39,8 @@ public class Principal extends AppCompatActivity {
         setContentView(R.layout.activity_principal);
         AccederCamara = findViewById(R.id.AccederCamara);
         conexionAPI = MainActivity.conexionAPI;
-        imagenpruebas = findViewById(R.id.imageView);
+        //imagenpruebas = findViewById(R.id.imageView);
+        linearLayout = findViewById(R.id.layout);
 
         //Permisos
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
@@ -54,6 +55,7 @@ public class Principal extends AppCompatActivity {
                 requestPermissions(permisos, CodPermisos);
             }
         }
+
     }
 
     @Override
@@ -91,25 +93,60 @@ public class Principal extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == BITMAP_REQUEST) {
             if (resultCode == RESULT_OK) {
-                //Hacemos cosas con los datos
+                //Guardamos la nueva foto
 
-                //IMAGEN
-                String imagen = data.getStringExtra(Camara.RESPUESTA_FOTO);
-                byte[] respuesta = Base64.getDecoder().decode(imagen);
-                Bitmap bitmapImage = BitmapFactory.decodeByteArray(respuesta, 0, respuesta.length, null);
-                imagenpruebas.setImageBitmap(bitmapImage);
+
+
+                Foto foto = new Foto(data.getStringExtra(Camara.RESPUESTA_FOTO), data.getDoubleArrayExtra(Camara.RESPUESTA_COORDENADAS), data.getFloatArrayExtra(Camara.RESPUESTA_BRUJULA));
+                InsertarImagen(foto.getFotoBitmap());
+
+                //imagenpruebas.setImageBitmap(foto.getFotoBitmap());
+
+
 
                 //GPS
-                double [] Coordenadas = data.getDoubleArrayExtra(Camara.RESPUESTA_COORDENADAS);
+                double [] Coordenadas = foto.getGPS();
 
                 //Brujula
-                float [] Brujula = data.getFloatArrayExtra(Camara.RESPUESTA_BRUJULA);
+                float [] Brujula = foto.getBrujula();
 
-                //Toast.makeText(getBaseContext(), "Holiiiiiiii", Toast.LENGTH_LONG).show();
 
                 Toast.makeText(getBaseContext(), "Lat: " + Coordenadas[0] + " y Long: " +Coordenadas[1], Toast.LENGTH_SHORT).show();
                 Toast.makeText(getBaseContext(), "X: "+ Brujula[0] + ", Y: " + Brujula[1] + ", Z: " + Brujula[2], Toast.LENGTH_LONG).show();
+
             }
         }
     }
+
+    //Con la imagen dada creamos una nueva ImagenView y la insertamos en el lineal_layout
+    //para poder verla
+    private void InsertarImagen(Bitmap imagen){
+        final ImageView nuevaImagen = new ImageView(getBaseContext());
+        nuevaImagen.setId(contadorImagenes);
+        contadorImagenes += 1;
+        nuevaImagen.setImageBitmap(imagen);
+/*
+Intento de modificar el tamaño fallido, cambia el tamanio de las imagenes directamente en la camara
+        LinearLayout.LayoutParams params = (TableRow.LayoutParams) nuevaImagen.getLayoutParams();
+        params.width = 200;
+        params.height = 200;
+
+        nuevaImagen.setLayoutParams(params);
+*/
+        nuevaImagen.setPadding(0,10,0,10);
+
+        //Cuando hagamos click en la imagen correspondiente pasaremos a una nueva activity con
+        //los datos de la imagen correspondiente
+        nuevaImagen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getBaseContext(), "He sido clickeada, mi id: " + nuevaImagen.getId(),Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+
+        linearLayout.addView(nuevaImagen);
+    }
+
 }
