@@ -22,7 +22,7 @@ public class ConexionAPI implements ApiInstrT {
             = MediaType.get("application/json; charset=utf-8");
     private OkHttpClient client = new OkHttpClient();
 
-    private boolean SePuedeContinuar, SesionIniciada, Registrado;
+    private boolean SePuedeContinuar, SesionIniciada, Registrado, UsrLibre;
 
 
     public ConexionAPI() {
@@ -31,6 +31,7 @@ public class ConexionAPI implements ApiInstrT {
         SesionIniciada = false;
         Registrado = false;
         SePuedeContinuar = true;
+        UsrLibre = false;
     }
 
     public ConexionAPI(String usuario, String contra) {
@@ -168,5 +169,50 @@ public class ConexionAPI implements ApiInstrT {
     public boolean registrocorrecto( String u, String c) {
         dormir();
         return Registrado;
+    }
+
+    public void UsuarioLibre(String user){
+        String url = "http://10.0.2.2:5000/ComprobarUsuario";
+        String json = "{\"nombre\":\""+user+"\"}";
+        postusr(url,json);
+    }
+
+    private void postusr(String url, String json) {
+        RequestBody body = RequestBody.create(json, JSON);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        //Parte asincrona
+        SePuedeContinuar = false;
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                String mMessage = e.getMessage();
+                Log.w("failure Response", mMessage);
+                UsrLibre = false;
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                String respuesta =  response.body().string();
+                Log.e("RespuestaApi",respuesta);
+
+                int i = respuesta.length();
+
+                //Esto queda
+                if (respuesta.length()  == 4){
+                    UsrLibre = true;
+                }
+                else UsrLibre = false;
+
+                SePuedeContinuar = true;
+            }
+        });
+    }
+
+    public boolean UsuarioLibreAux() {
+        dormir();
+        return UsrLibre;
     }
 }

@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
             sol = conexionAPI.iniciocorrecto(contra);
         }
 
-        return true;                                                                                   //Return True si se usa solo sin internet. La variable sol en caso contrario
+        return sol;                                                                                   //Return True si se usa solo sin internet. La variable sol en caso contrario
     }
 
     public void Registrarse(View view){ //Se usa al pulsar el boton de registarse
@@ -96,8 +96,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
     }
 
     private boolean UsuarioLibre(String nombre) {
-                                                                                                    //Comprobar la disponibilidad del nombre de usuario
-    return true;
+        //Comprueba la disponibilidad del nombre de usuario
+        conexionAPI.UsuarioLibre(nombre);
+        return conexionAPI.UsuarioLibreAux();
     }
 
     private boolean Sanear(String nombre, String contra) {
@@ -111,8 +112,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
 
     private void PasarALaSiguienteActivity(ConexionAPI conexionAPI) {
         Intent intent = new Intent(this, Principal.class);
-        //intent.putExtra(USUARIO, conexionAPI.getUsuario());                                          //Mandar esto a la siguiente activity, sino no sabremos quien es el usuario
-        intent.putExtra(USUARIO, "pepe");
+        intent.putExtra(USUARIO, conexionAPI.getUsuario());                                          //Mandar esto a la siguiente activity, sino no sabremos quien es el usuario
+        //intent.putExtra(USUARIO, "pepe");
         startActivity(intent);
     }
 }

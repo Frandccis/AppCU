@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return 'Holi'
+    return 'Hello_World'
 
 @app.route('/test',methods = ['POST', 'GET'])
 #curl -X POST -F 'nombre=Gutierrez' http://127.0.0.1:5000/test, esto era para los formularios, ahora obsoleto en este progrma
@@ -55,7 +55,7 @@ def InicioRegistro():
         if request.method == 'POST':
             #request.content_type("application/json")
             data = request.get_json(force=True)
-            tipo = data['tipo']                          #Si es un inicioo un registro
+            tipo = data['tipo']                          #Si es un inicio o un registro
             nombre = data['usuario']
             contrasenia = data['contrasenia']
             print (tipo)
@@ -89,6 +89,32 @@ def InicioRegistro():
 
     except Exception as e:
         return format(str(e))
+
+@app.route('/ComprobarUsuario',methods = ['POST'])
+def ComprobarUsuario():
+    try:
+        if request.method == 'POST':
+            data = request.get_json(force=True)
+            nombre = data['nombre']
+            print("------------------------------------------Comprobar usuario")
+            print (nombre)
+            #------------------------------------
+            
+            cur = cnx.cursor()
+            cur.execute("Select NombreUsuario from usuario where NombreUsuario = '"+ nombre +"'")
+            data = cur.fetchall()
+            print(data)
+            print(len(data))
+            print("------------------------------------------Fin Comprobar usuario")
+            if len(data) == 1:
+                return 'False'
+            cur.close()
+            return 'True'
+
+
+    except Exception as e:
+        return format(str(e))
+
 
 if __name__ == '__main__':
     #app.run(ssl_context='adhoc') esto para https

@@ -239,7 +239,7 @@ Intento de modificar el tamaño fallido, cambia el tamanio de las imagenes direc
 */
         nuevaImagen.setPadding(0,10,0,10);
 
-        //Cuando hagamos click en la imagen correspondiente pasaremos a una nueva activity con       
+        //Cuando hagamos click en la imagen correspondiente pasaremos a una nueva activity con
         //los datos de la imagen correspondiente
         nuevaImagen.setOnClickListener(new View.OnClickListener() {
             @Override
