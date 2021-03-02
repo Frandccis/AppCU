@@ -197,8 +197,8 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
                     if (characteristics != null) {
                         jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
                     }
-                    int width = 858;
-                    int height = 480;
+                    int width = 572;
+                    int height = 320;
                     /*if (jpegSizes != null && 0 < jpegSizes.length) {
                         width = jpegSizes[0].getWidth();
                         height = jpegSizes[0].getHeight();

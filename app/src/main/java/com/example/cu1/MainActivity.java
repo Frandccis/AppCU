@@ -14,6 +14,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
     private Button Iniciar, Registrarse;
     private EditText Usuario, Contrasenia;
     public  static ConexionAPI conexionAPI;
+    public static final String USUARIO = "OBTENER_USUARIO";
 
                                                                                                     //De momento no se usa
     @Override
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
             sol = conexionAPI.iniciocorrecto(contra);
         }
 
-        return true; //Return True si se usa solo sin internet. La variable sol en caso contrario
+        return true;                                                                                   //Return True si se usa solo sin internet. La variable sol en caso contrario
     }
 
     public void Registrarse(View view){ //Se usa al pulsar el boton de registarse
@@ -110,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityI {
 
     private void PasarALaSiguienteActivity(ConexionAPI conexionAPI) {
         Intent intent = new Intent(this, Principal.class);
+        //intent.putExtra(USUARIO, conexionAPI.getUsuario());                                          //Mandar esto a la siguiente activity, sino no sabremos quien es el usuario
+        intent.putExtra(USUARIO, "pepe");
         startActivity(intent);
     }
 }
