@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -42,7 +41,6 @@ public class Principal extends AppCompatActivity {
     private List<FotoBBDD> fotosBBDD;
     private int contadorId;
     Thread thread;
-    public Handler handler;
 
     //Imagenes
     private LinearLayout linearLayout;
@@ -68,15 +66,14 @@ public class Principal extends AppCompatActivity {
 
         //Imagenes
         linearLayout = findViewById(R.id.layout);
-        //listaFotos = new ArrayList<Foto>();
 
         //BBDD
         BBDD = new ViewModelProvider(this).get(FotoModelView.class);
 
 
-        //hay que ejecutar esto en otro thread que no sea el main
+        //Recuperamos las fotos del usuario, hay que hacer una consulta a la BBDD interna
+        //para ello necesitamos hacerlo desde otro thread que no sea el main
         thread = new Thread(() -> {
-            //Log.v("Desde el Thread Equis", "Holiiiiiiiiiiiii");
             fotosBBDD = BBDD.getFotosBBDD(usuario);
 
             if (fotosBBDD == null)
@@ -86,34 +83,30 @@ public class Principal extends AppCompatActivity {
 
         thread.start();
 
+        //Usamos este thread para dibujar las fotos en cuanto se haya realizado
+        //correctamente la consulta anterior
         runOnUiThread(() -> {
+
             while (fotosBBDD == null){
-                //No hacemos nada
+                //No hacemos nada mientras no tengamos la lista de fotos
             }
 
-            //Ahora tenemos que ver si la lista no esta vacia, recuperar las fotos
+            //Recuperar las fotos si la lista no esta vacia
             if(!fotosBBDD.isEmpty()){
                 contadorId = fotosBBDD.size();
-                //Toast.makeText(getBaseContext(), "Hay " + fotosBBDD.size() + " fotos", Toast.LENGTH_LONG).show();
                 for(FotoBBDD foto: fotosBBDD){
                     InsertarImagen(foto.getBytesFoto(), foto.getid());
                 }
             }
             else{
                 contadorId = 0;
-                Toast.makeText(getBaseContext(), "Hay " + fotosBBDD.size() + " fotos", Toast.LENGTH_LONG).show();
             }
         });
-
-        //Avisos
-        Toast.makeText(getBaseContext(),
-                "Recuerda tener activado el GPS para tomar una foto nueva.",
-                Toast.LENGTH_LONG).show();
 
         //Permisos
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
         ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            //Tenemos los permisos
+            //Tenemos los permisos, no hacemos nada
 
         }
         else{
@@ -150,24 +143,29 @@ public class Principal extends AppCompatActivity {
         }
     }
 
+    //Se ejecuta cuando pulsamos el boton de acceder a la camara para realizar una nueva foto
     public void AccederACamara (View view){
+        //Abrimos la nueva activity de la camara y esperaremos a recibir los datos
         Intent intent = new Intent(this, Camara.class);
             startActivityForResult(intent, BITMAP_REQUEST);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
+    //Esperamos por la respuestas de las activities correspondientes
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        //Esperamos por las respuestas de la camara con todos sus datos
         if (requestCode == BITMAP_REQUEST) {
             if (resultCode == RESULT_OK) {
-                //Guardamos la nueva foto
+                //Guardamos la nueva foto en la BBDD y la mostramos en el layout
 
                 String Sfoto = data.getStringExtra(Camara.RESPUESTA_FOTO);
                 double [] Coordenadas = data.getDoubleArrayExtra(Camara.RESPUESTA_COORDENADAS);
                 float [] Brujula = data.getFloatArrayExtra(Camara.RESPUESTA_BRUJULA);
 
-                FotoBBDD foto = new FotoBBDD(contadorId,usuario, Sfoto,                      //--------------Cambiar el usuario por el dado
+                FotoBBDD foto = new FotoBBDD(contadorId,usuario, Sfoto,
                         Coordenadas[0], Coordenadas[1], Brujula[0], Brujula[1], Brujula[2]);
                 contadorId += 1;
 
@@ -175,35 +173,22 @@ public class Principal extends AppCompatActivity {
                 BBDD.insert(foto);
                 InsertarImagen(foto.getBytesFoto(), foto.getid());
                 fotosBBDD.add(foto);
-/*
-                Foto foto = new Foto(data.getStringExtra(Camara.RESPUESTA_FOTO), data.getDoubleArrayExtra(Camara.RESPUESTA_COORDENADAS), data.getFloatArrayExtra(Camara.RESPUESTA_BRUJULA));
-                InsertarImagen(foto.getFotoBitmap());
-                listaFotos.add(foto);
-                Toast.makeText(getBaseContext(), "Ahora hay " + listaFotos.size(), Toast.LENGTH_SHORT).show();
 
-
-
-                //GPS
-                double [] Coordenadas = foto.getGPS();
-
-                //Brujula
-                float [] Brujula = foto.getBrujula();
-
-
-                //Toast.makeText(getBaseContext(), "Lat: " + Coordenadas[0] + " y Long: " +Coordenadas[1], Toast.LENGTH_SHORT).show();
-                //Toast.makeText(getBaseContext(), "X: "+ Brujula[0] + ", Y: " + Brujula[1] + ", Z: " + Brujula[2], Toast.LENGTH_LONG).show();
-*/
             }
         }
+        //Esperamos por la respuesta de la activity infoFoto, por si nos indica que debemos
+        //borrar la foto dada
         else if (requestCode == BORRAR_REQUEST){
             if (resultCode == RESULT_OK){
+
+                //Procedemos a la eliminacion de la foto de la BBDD
                 int id = data.getIntExtra(Did, -1);
 
                 if( id == -1)
                     Toast.makeText(getBaseContext(), "No se ha podido borrar la foto.",
                             Toast.LENGTH_SHORT).show();
                 else {
-                    //hay que ejecutar esto en otro thread que no sea el main
+                    //Hay que ejecutar esto en otro thread que no sea el main
                     thread = new Thread(() -> {
                         for (FotoBBDD foto: fotosBBDD){
                             if (foto.getid() == id){
@@ -213,7 +198,6 @@ public class Principal extends AppCompatActivity {
                         }
 
                     });
-
                     thread.start();
                     Toast.makeText(getBaseContext(), "Foto borrada.",
                             Toast.LENGTH_SHORT).show();
@@ -224,59 +208,47 @@ public class Principal extends AppCompatActivity {
     }
 
     //Con la imagen dada creamos una nueva ImagenView y la insertamos en el lineal_layout
-    //para poder verla
+    //para poder verla e interactuar con ella
     private void InsertarImagenAux(Bitmap imagen, int id){
         final ImageView nuevaImagen = new ImageView(getBaseContext());
         nuevaImagen.setId(id);
         nuevaImagen.setImageBitmap(imagen);
-/*
-Intento de modificar el tamaño fallido, cambia el tamanio de las imagenes directamente en la camara
-        LinearLayout.LayoutParams params = (TableRow.LayoutParams) nuevaImagen.getLayoutParams();
-        params.width = 200;
-        params.height = 200;
-
-        nuevaImagen.setLayoutParams(params);
-*/
         nuevaImagen.setPadding(0,10,0,10);
 
         //Cuando hagamos click en la imagen correspondiente pasaremos a una nueva activity con
         //los datos de la imagen correspondiente
-        nuevaImagen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FotoBBDD foto = new FotoBBDD(-1, "NULL","NULL",0,0,0,0,0);
+        nuevaImagen.setOnClickListener(view -> {
+            FotoBBDD foto = new FotoBBDD(-1, "NULL","NULL",0,0,0,0,0);
 
-                for (FotoBBDD fotoaux : fotosBBDD){
-                    if(fotoaux.getid() == nuevaImagen.getId()){
-                        foto = fotoaux;
-                        break;
-                    }
+            for (FotoBBDD fotoaux : fotosBBDD){
+                if(fotoaux.getid() == nuevaImagen.getId()){
+                    foto = fotoaux;
+                    break;
                 }
-
-                //Toast.makeText(getBaseContext(), "He sido clickeada, mi id: " + nuevaImagen.getId(),Toast.LENGTH_SHORT).show();
-                //Toast.makeText(getBaseContext(), "He sido clickeada, mi Y: " + fotosBBDD.get(nuevaImagen.getId()).getY(),Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(getBaseContext(), InfoFoto.class);
-
-                intent.putExtra(LAT, foto.getLatitud());
-                intent.putExtra(LONG, foto.getLongitud());
-
-                intent.putExtra(DX,foto.getX());
-                intent.putExtra(DY,foto.getY());
-                intent.putExtra(DZ,foto.getZ());
-
-                intent.putExtra(Did,foto.getid());
-
-                //fotosBBDD.get(nuevaImagen.getId())
-                // intent.putExtra("FOTO_EXTRA", );
-                //startActivity(intent);
-                startActivityForResult(intent, BORRAR_REQUEST);
             }
+
+            Intent intent = new Intent(getBaseContext(), InfoFoto.class);
+
+            //Pasamos los datos de la imagen correspondiente a la siguiente activity
+            //para poder mostrar dichos datos al usuario y abrir el mapa
+            intent.putExtra(LAT, foto.getLatitud());
+            intent.putExtra(LONG, foto.getLongitud());
+
+            intent.putExtra(DX,foto.getX());
+            intent.putExtra(DY,foto.getY());
+            intent.putExtra(DZ,foto.getZ());
+
+            intent.putExtra(Did,foto.getid());
+
+            startActivityForResult(intent, BORRAR_REQUEST);
         });
 
+        //Por ultimo la insertamos para que sea visible
         linearLayout.addView(nuevaImagen);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
+    //Se encarga de insertar la imagen con su identificador en el layout
     public void InsertarImagen( String foto, int id) {
         byte[] respuesta = Base64.getDecoder().decode(foto);
         Bitmap bitmapImage = BitmapFactory.decodeByteArray(respuesta, 0, respuesta.length, null);

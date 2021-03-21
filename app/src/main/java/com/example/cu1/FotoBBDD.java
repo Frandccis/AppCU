@@ -5,11 +5,10 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+// Clase encargada de crear la tabla y columnas en la BBDD de Room sobre SQL
+// Asi como de tener las funciones para acceder a cada dato
 @Entity(tableName = "tabla_foto")
 public class FotoBBDD {
-
-
-
 
     @PrimaryKey
     @NonNull

@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel;
 
 import java.util.List;
 
+//Por ultimo tenemos esta clase que es una abstraccion de FotoRepository
 public class FotoModelView extends AndroidViewModel {
 
     private FotoRepository mRepository;

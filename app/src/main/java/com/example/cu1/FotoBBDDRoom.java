@@ -9,6 +9,7 @@ import androidx.room.RoomDatabase;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+//Esta clase se encarga de poner en marcha la BBDD de Room
 @Database(entities = {FotoBBDD.class}, version = 1, exportSchema = false)
 public abstract class FotoBBDDRoom extends RoomDatabase {
     public abstract FotoDao fotoDao();

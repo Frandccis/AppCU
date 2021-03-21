@@ -4,6 +4,7 @@ import android.app.Application;
 
 import java.util.List;
 
+//Esta clase se encarga de mandar las ejecuciones de las consultas a la BBDD
 public class FotoRepository {
     private FotoDao dFotoDao;
 

@@ -25,6 +25,8 @@ public class ConexionAPI implements ApiInstrT {
     private boolean SePuedeContinuar, SesionIniciada, Registrado, UsrLibre;
 
 
+    //Constructor vacio, por temas de sincronizacion es imposible crear una instancia
+    // directamente con los datos de usuario y contrasenia
     public ConexionAPI() {
         this.usuario = "";
         this.contra = "";
@@ -34,33 +36,26 @@ public class ConexionAPI implements ApiInstrT {
         UsrLibre = false;
     }
 
-    public ConexionAPI(String usuario, String contra) {
-        this.usuario = usuario;
-        this.contra = contra;
-        SesionIniciada = false;
-        Registrado = false;
-        SePuedeContinuar = true;
-    }
-
+    //Establece el nombre de usuario
     public void setUsuario(String usuario) {
         this.usuario = usuario;
     }
 
+    //Establece la contrasenia
     public void setContra(String contra) {
         this.contra = contra;
     }
 
+    //Devuelve el nombre de usuario
     public String getUsuario() {
         return usuario;
     }
 
-    public String getContra() {
-        return contra;
-    }
-
     @Override
+    //Iniciamos sesion, devuelve true o false dependiendo de la respuesta de la API
     public void IniciarSesion() {
 
+        //Para comunicarnos necesitamos el json con los datos y la URL
         String url = "http://10.0.2.2:5000/InicioSesion";
         String json = "{\"usuario\":\""+usuario+"\"," +
                         "\"contrasenia\":\""+contra+"\"," +
@@ -70,12 +65,16 @@ public class ConexionAPI implements ApiInstrT {
     }
 
     @Override
+    //Devuelve True o False dependiendo de la respueta dada por la API,
+    //hay que pedirla despues por temas de sincronizacion
     public boolean iniciocorrecto(String contrasenia) {
         dormir();
         return SesionIniciada;
 
     }
 
+    //Semaforo para la sincronizacion entre la respuestas de la API
+    // y los datos devueltos a la MainActivity
     private void dormir() {
         while (!SePuedeContinuar){
             try {
@@ -106,6 +105,8 @@ public class ConexionAPI implements ApiInstrT {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 String respuesta =  response.body().string();
                 Log.e("RespuestaApi",respuesta);
+                //La API nos devolvera true si tanto el usuario como la contrasenia asociada
+                //al mismo coinciden, false en otro caso.
 
                 if (respuesta.length()  == 4){
                         SesionIniciada = true;
@@ -121,8 +122,9 @@ public class ConexionAPI implements ApiInstrT {
     }
 
     @Override
+    //Nos registramos, devuelve true o false dependiendo de la respuesta de la API
     public void Registrarse() {
-
+        //Para comunicarnos necesitamos el json con los datos y la URL
         String url = "http://10.0.2.2:5000/InicioSesion";
         String json = "{\"usuario\":\""+usuario+"\"," +
                 "\"contrasenia\":\""+contra+"\"," +
@@ -152,9 +154,9 @@ public class ConexionAPI implements ApiInstrT {
                 String respuesta =  response.body().string();
                 Log.e("RespuestaApi",respuesta);
 
-                int i = respuesta.length();
-
-                //Esto queda
+                //Si no existe ningun otro usuario con el mismo nombre, se crea y se le asigna la
+                //contrasenia que ha elegido, si funciona sin errores devuelve true, false en
+                //caso contrario.
                 if (respuesta.length()  == 4){
                     Registrado = true;
                 }
@@ -166,11 +168,14 @@ public class ConexionAPI implements ApiInstrT {
     }
 
     @Override
+    //Devuelve True o False dependiendo de la respueta dada por la API,
+    //hay que pedirla despues por temas de sincronizacion
     public boolean registrocorrecto( String u, String c) {
         dormir();
         return Registrado;
     }
 
+    //Se comprueba que el usuario introducido para registrarse no existe aun en la BBDD de la API
     public void UsuarioLibre(String user){
         String url = "http://10.0.2.2:5000/ComprobarUsuario";
         String json = "{\"nombre\":\""+user+"\"}";
@@ -198,9 +203,8 @@ public class ConexionAPI implements ApiInstrT {
                 String respuesta =  response.body().string();
                 Log.e("RespuestaApi",respuesta);
 
-                int i = respuesta.length();
-
-                //Esto queda
+                //Devuelve True si el usuario no se encuentra en la BBDD, es decir, esta libre
+                //False si ya esta registrado
                 if (respuesta.length()  == 4){
                     UsrLibre = true;
                 }
@@ -211,6 +215,8 @@ public class ConexionAPI implements ApiInstrT {
         });
     }
 
+    //Devuelve True o False dependiendo de la respueta dada por la API,
+    //hay que pedirla despues por temas de sincronizacion
     public boolean UsuarioLibreAux() {
         dormir();
         return UsrLibre;

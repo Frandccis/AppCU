@@ -5,8 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
@@ -96,7 +94,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(CameraDevice camera) {
-            //This is called when the camera is open
+            //A esto lo llamamos cuando la camara es abierta
             Log.e(TAG, "onOpened");
             cameraDevice = camera;
             createCameraPreview();
@@ -121,10 +119,8 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     protected CameraCaptureSession cameraCaptureSessions;
     protected CaptureRequest.Builder captureRequestBuilder;
     private Size imageDimension;
-    private ImageReader imageReader;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -149,6 +145,8 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     //_____________________________________COMIENZO_________________________________________
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        //Inicio de las variables del layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camara);
 
@@ -163,6 +161,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
 
         textureView = findViewById(R.id.textureView);
 
+        //Ahora configuramos las acciones que debe tomar cada componente
         Configurar();
     }
 
@@ -179,7 +178,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
         //Con esto tan solo unimos el listener a la textura
         textureView.setSurfaceTextureListener(textureListener);
 
-        //Y aqui establecemos el uso del boton
+        //Y aqui establecemos el uso del boton para tomar la foto
         Guardar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -189,79 +188,71 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
                     Log.e(TAG, "cameraDevice is null");
                     return;
                 }
-                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
                 try {
-                    CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-                    Size[] jpegSizes = null;
-                    if (characteristics != null) {
-                        jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
-                    }
+                    //Configuracion de la foto
                     int width = 572;
                     int height = 320;
-                    /*if (jpegSizes != null && 0 < jpegSizes.length) {
-                        width = jpegSizes[0].getWidth();
-                        height = jpegSizes[0].getHeight();
-                    }*/
+
                     ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
                     List<Surface> outputSurfaces = new ArrayList<Surface>(2);
+
+                    //Establecemos la imagen de la camara en la textureview
                     outputSurfaces.add(reader.getSurface());
                     outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
+
+                    //Configuramos como se comporta la camara
                     final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                     captureBuilder.addTarget(reader.getSurface());
                     captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                    // Orientation
+
+                    // Orientacion del telefono para tomar la foto y devolverla, no funciona en el simulador pero si en movil fisico
                     int rotation = getWindowManager().getDefaultDisplay().getRotation();
                     captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
+                    //Accion a tomar cuando el boton de guardar la imagen es presionado
                     ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                         @RequiresApi(api = Build.VERSION_CODES.O)
                         @Override
-                        public void onImageAvailable(ImageReader reader) {                                                          //Aqui esta lo bueno del asunto
+                        //Al tomar una foto
+                        public void onImageAvailable(ImageReader reader) {
                             Image image = null;
                             try {
-                                image = reader.acquireLatestImage();                    //Sacamos la imagen de la cola
+                                //Sacamos la imagen de la cola
+                                image = reader.acquireLatestImage();
 
-                                ByteBuffer buffer = image.getPlanes()[0].getBuffer();   //Obtenemos los bytes de la imagen
-
+                                //Obtenemos los bytes de la imagen
+                                ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                                 byte[] bytes = new byte[buffer.capacity()];
-
                                 buffer.get(bytes);
 
+                                //Codificamos los datos
+                                //Y lo convertimos a un string
                                 String imagen;
-                                // textView.setText(imagen);
+                                byte[] bytesencode = Base64.getEncoder().encode(bytes);
+                                imagen = new String(bytesencode);
 
-                                byte[] bytesencode = Base64.getEncoder().encode(bytes);             //Codificamos los datos
-                                imagen = new String(bytesencode);                                    //Y lo convertimos a un string que pueda enviar por json (por ejemplo)                           //Hasta unos 60 mil caracteres ahora sacar de aqui la imagen, hasta 6 millones en mi movil
 
                                 Log.e(TAG, String.valueOf(imagen.length()));
                                 Log.e(TAG, imagen);
-                                //textView2.setText(imagen); Esto peta por que son demasiados cracteres
-                                //textView2.setText(String.valueOf(imagen.length()));
 
-                                Intent respuestaintent = new Intent();                                  //NO FUNCIONA EN MI TELEFONO, HAY QUE BAJARLE LA CALIDAD A LA IMAGEN
+                                //Empezamos a crear el intent que sera la respuesta de esta activity
+                                Intent respuestaintent = new Intent();
+
+                                //Devolvemos la imagen obtenida
                                 respuestaintent.putExtra(RESPUESTA_FOTO, imagen);
 
+                                //Los datos de la brujula/giroscopio
                                 float [] brujula = {Xvalue, YValue, Zvalue};
                                 respuestaintent.putExtra(RESPUESTA_BRUJULA, brujula);
 
+                                //Y las coordenadas gps
                                 double [] GPS = {Latitud, Longitud};
                                 respuestaintent.putExtra(RESPUESTA_COORDENADAS, GPS);
 
                                 setResult(RESULT_OK, respuestaintent);
-                                //Toast.makeText(getBaseContext(),"LLego hasta aqui", Toast.LENGTH_LONG).show();
 
-                                finish();                                      //MATA LA ACTIVITY...
-                                //Toast.makeText(getBaseContext(),"Tambien aqui", Toast.LENGTH_LONG).show();
-
-                                //Esta parte es como devolver el string a un bitmap
-                                byte[] respuesta = Base64.getDecoder().decode(imagen);              //Un ejemplo de recibir un string de json y convertirlo de nuevo a bytes
-
-
-                                Bitmap bitmapImage = BitmapFactory.decodeByteArray(respuesta, 0, bytes.length, null);    //Instrucion clave, convierte los bytes a una imagen que se puede mostrar
-
-                                //Poner el bitmap en el imageview
-                                //imageView.setImageBitmap(bitmapImage);                                                                  //EL RESULTADO HERMOSO, mostramos la imagen
+                                finish();
 
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -275,6 +266,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
                         }
 
                     };
+
                     reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
                     final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                         @Override
@@ -315,7 +307,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
-            // Add permission for camera and let user grant the permission
+            //Aniadimos permisos para la camara
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
                 return;
 
@@ -336,11 +328,11 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    //The camera is already closed
+                    //La camara ya esta cerrada
                     if (null == cameraDevice) {
                         return;
                     }
-                    // When the session is ready, we start displaying the preview.
+                    //Cuando la sesion esta lista, emepzamos a mostrar la preview
                     cameraCaptureSessions = cameraCaptureSession;
                     updatePreview();
                 }
@@ -386,6 +378,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
 
     //-------------------------------------------GPS------------------------------------------
 
+    //Aqui nos encargamos de obtener las coordenadas GPS y actualizarlas en el layout
     @Override
     public void onLocationChanged(@NonNull Location location) {
         Latitud = location.getLatitude();
@@ -395,6 +388,7 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
         LongV.setText("" + Longitud);
     }
 
+    //En este punto se supone que ya tenemos los permisos del GPS y el GPS esta activado
     @SuppressLint("MissingPermission")
     private void UpdateGPS() {
         try {
@@ -403,20 +397,20 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
 
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Un poema con el gps", Toast.LENGTH_LONG);
+            Toast.makeText(this, "Un problema con el gps", Toast.LENGTH_LONG);
         }
     }
 
     //------------------------------------SENSOR-----------------------------------------------
 
+    //Igual que el GPS pero con el sensor, recogemos los datos proporcionados por este
+    //y los actualizamos tanto en la variables como en el layout
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             Xvalue = sensorEvent.values[0];
             YValue = sensorEvent.values[1];
             Zvalue = sensorEvent.values[2];
-
-
 
             BX.setText("" + Xvalue);
             BY.setText("" + YValue);
@@ -448,7 +442,6 @@ public class Camara extends AppCompatActivity implements LocationListener, Senso
     protected void onPause() {
         Log.e(TAG, "onPause");
         sensorManager.unregisterListener(this);
-        //closeCamera();
         stopBackgroundThread();
         super.onPause();
     }

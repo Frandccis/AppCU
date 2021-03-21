@@ -11,6 +11,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+
+// Esta activity viene dada por Google y se encarga de mostrar en el mapa el lugar
+// en el que se tomo la foto originalmente, asi de como permitir su apertura en
+// Google Maps para dirigirse a la ubicacion, mirar sitios alrededor, etc.
+
 public class ActivityFotoyMapa extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -42,7 +47,7 @@ public class ActivityFotoyMapa extends FragmentActivity implements OnMapReadyCal
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
+        // Aniade una marca en el lugar de la foto dada las coordenadas y la enfoca
         LatLng foto = new LatLng(Lat, Long);
         mMap.addMarker(new MarkerOptions().position(foto).title("Lugar de la foto"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(foto));

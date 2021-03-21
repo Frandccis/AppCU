@@ -57,8 +57,8 @@
 
     <TextView
         android:id="@+id/textView3"
-        android:layout_width="211dp"
-        android:layout_height="71dp"
+        android:layout_width="232dp"
+        android:layout_height="123dp"
         android:layout_marginTop="24dp"
         android:text="@string/inf_para_registrarte_tan_solo_rellena_los_campos_y_pulsa_registrar"
         android:textSize="18sp"

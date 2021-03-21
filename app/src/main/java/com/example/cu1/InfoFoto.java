@@ -31,7 +31,7 @@ public class InfoFoto extends AppCompatActivity {
     }
 
     private void Configurar() {
-        //datos
+        //Recogemos los datos pasados de la activity anterior
         id = getIntent().getIntExtra(Principal.Did, -1);
 
         //botones
@@ -69,18 +69,20 @@ public class InfoFoto extends AppCompatActivity {
         });
     }
 
+    //Nos abre una nueva activity donde podemos ver la localizacion en la que se tomo la foto
     private void ClickVerMapa(){
-        //Toast.makeText(getBaseContext(), "hola desde mapa", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(getBaseContext(), ActivityFotoyMapa.class);
 
+        //Pasamos las coordenadas GPS para el mapa
         intent.putExtra(Principal.LAT, getIntent().getDoubleExtra(Principal.LAT, 0));
         intent.putExtra(Principal.LONG, getIntent().getDoubleExtra(Principal.LONG, 0));
 
+        //Iniciamos la activity
         startActivity(intent);
     }
 
+    //Se encarga de mandar la instruccion de borrar la foto en la que nos encontramos
     private void ClickBorrar(){
-        //Toast.makeText(getBaseContext(), "hola desde borrar", Toast.LENGTH_SHORT).show();
         Intent respuesta = new Intent();
 
         respuesta.putExtra(Principal.Did, id);

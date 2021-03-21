@@ -21,7 +21,7 @@
         android:id="@+id/button_mapa"
         android:layout_width="279dp"
         android:layout_height="132dp"
-        android:text="Ver loacalización"
+        android:text="Ver localización"
         app:layout_constraintBottom_toBottomOf="@+id/button_borrar_foto"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/button_borrar_foto"

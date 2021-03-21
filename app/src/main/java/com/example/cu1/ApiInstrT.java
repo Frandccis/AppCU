@@ -2,11 +2,11 @@ package com.example.cu1;
 
 public interface ApiInstrT {
 
-    //Instrucciones de MainActivity
+    //Instrucciones para la configuracion de la conexion con la API
+    // y para la comunicacion con la misma
     void setUsuario(String usuario);
     void setContra(String contra);
     String getUsuario();
-    String getContra();
     void IniciarSesion();
     boolean iniciocorrecto(String contrasenia);
     void Registrarse ();
